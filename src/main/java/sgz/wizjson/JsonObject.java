@@ -1,34 +1,38 @@
 package sgz.wizjson;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
 public class JsonObject extends HashMap<String, Object> {
-    //private final Map<String, Object> json = new HashMap<>();
 
-    public JsonObject(Map<String, Object> value) {
+    public JsonObject() {
         super();
+    }
+
+    public JsonObject(Map<?, ?> value) {
         value.forEach((k, v) -> {
-            if (v instanceof Map) {
-                v = new JsonObject((Map) v);
-            }else if (v instanceof List) {
-                v = new JsonArray((List) v);
-            }
-            this.put(k, v);
+            this.put(k.toString(), v);
         });
+    }
+
+    public JsonObject(Object value) {
+
     }
 
     public Object object() {
         return this;
     }
 
+
+
     public String toString() {
-        JsonBuilder builder = new JsonBuilder();
+        JsonWriter builder = new JsonWriter();
         builder.writeValue((Map<String, Object>) this);
         return builder.toString();
     }
+
+
 
 
     public String serialize() {

@@ -3,9 +3,9 @@ package sgz.wizjson;
 import java.util.List;
 import java.util.Map;
 
-public abstract class Json {
+public interface Json {
     //public abstract Object object();
-    //public abstract JsonType JsonType();
+    public abstract Class<?> getOriginType();
     public abstract String toString();
 
     public static JsonObject from(Map<String, Object> value) {

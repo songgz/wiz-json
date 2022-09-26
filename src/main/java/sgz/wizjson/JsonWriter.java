@@ -1,41 +1,52 @@
 package sgz.wizjson;
 
+import java.io.StringWriter;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
-public class JsonBuilder {
-    private StringBuilder json;
+public class JsonWriter {
+    private StringWriter json;
     private String delimiter;
 
-    JsonBuilder() {
-        this.json = new StringBuilder();
+    JsonWriter() {
+        this.json = new StringWriter();
     }
 
     void writeNull() {
         this.json.append("null");
     }
 
+    void writeValue(String value) {
+        this.json.append('"');
+        this.json.append(value);
+        this.json.append('"');
+    }
+
+    void writeValue(char value) {
+        this.json.append('"');
+        this.json.append(value);
+        this.json.append('"');
+    }
+
+    void writeValue(Number value) {
+        this.json.append(value.toString());
+    }
+
+    void writeValue(Boolean value) {
+        this.json.append(value ? "true" : "false");
+    }
+
+    void writeValue(Enum<?> value) {
+        this.json.append('"');
+        this.json.append(value.name());
+        this.json.append('"');
+    }
+
+
     void writeDelimiter() {
         this.json.append(',');
-    }
-
-    void arrayBegin() {
-        this.json.append('[');
-        this.delimiter = " ";
-    }
-
-    void arrayElement(Class<?> value) {
-        this.writeMore();
-        this.writeValue(value);
-    }
-
-    void arrayEnd() {
-        this.json.append(']');
     }
 
     void writeMore() {
@@ -44,7 +55,20 @@ public class JsonBuilder {
         }else{
             this.delimiter = ",";
         }
+    }
 
+    void arrayBegin() {
+        this.json.append('[');
+        this.delimiter = " ";
+    }
+
+    void arrayElement(Object value) {
+        this.writeMore();
+        this.writeValue(value);
+    }
+
+    void arrayEnd() {
+        this.json.append(']');
     }
 
     void objectBegin() {
@@ -52,7 +76,7 @@ public class JsonBuilder {
         this.delimiter = " ";
     }
 
-    void writePair(String key, Object value) {
+    void objectProperty(String key, Object value) {
         this.writeMore();
         this.writeName(key);
         this.writeValue(value);
@@ -64,7 +88,7 @@ public class JsonBuilder {
 
     void writeName(Object name) {
         this.json.append('"');
-        this.json.append(name);
+        this.json.append(name.toString());
         this.json.append('"');
         this.json.append(':');
     }
@@ -86,92 +110,38 @@ public class JsonBuilder {
             this.writeValue((Boolean) value);
         } else if(value instanceof Enum){
             this.writeValue((Enum)value);
+        } else if (value instanceof Character) {
+            this.writeValue((char) value);
+
+        }else{
+            this.writeBean(value);
         }
 
-    }
-
-    void writeValue(Enum<?> value) {
-        this.json.append('"');
-        this.json.append(value.name());
-        this.json.append('"');
-    }
-
-    void writeValue(Boolean value) {
-        this.json.append(value ? "true" : "false");
-    }
-
-    void writeValue(char value) {
-        this.json.append(value);
     }
 
     void writeValue(Map<?, ?> value) {
-        if (value.isEmpty()) {
-            this.json.append("{}");
-            return ;
-        }
-
-        this.json.append('{');
-        Iterator<? extends Map.Entry<?, ?>> iter = value.entrySet().iterator();
-        if (iter.hasNext()) {
-            Map.Entry<?, ?> first = iter.next();
-            this.writeName(first.getKey());
-            this.writeValue(first.getValue());
-        }
-
-        while (iter.hasNext()) {
-            Map.Entry<?, ?> entry = iter.next();
-            this.writeDelimiter();
-            this.writeName(entry.getKey());
-            this.writeValue(entry.getValue());
-        }
-        this.json.append('}');
+        this.objectBegin();
+        value.forEach((k, v) -> {
+            this.objectProperty(k.toString(), v);
+        });
+        this.objectEnd();
     }
 
     void writeValue(Collection<?> value) {
-        if (value.isEmpty()) {
-            this.json.append("[]");
-            return;
-        }
-
-        this.json.append('[');
-        Iterator iter = value.iterator();
-        if (iter.hasNext()) {
-            this.writeValue(iter.next());
-        }
-
-        while (iter.hasNext()) {
-            this.writeDelimiter();
-            this.writeValue(iter.next());
-        }
-        this.json.append(']');
-    }
-
-    void writeValue(String value) {
-        this.json.append('"');
-        this.json.append(value);
-        this.json.append('"');
-    }
-
-
-
-    void writeValue(Number value) {
-        this.json.append(value);
+        this.arrayBegin();
+        value.forEach(item -> {
+            this.arrayElement(item);
+        });
+        this.arrayEnd();
     }
 
     void writeArray(Object value) {
-        this.json.append('[');
+        this.arrayBegin();
         int length = Array.getLength(value);
-        if (length > 0) {
-            Object o = Array.get(value, 0);
-            this.writeValue(o);
+        for (int i=0; i<length; i++){
+            this.arrayElement(Array.get(value, i));
         }
-
-        for (int i=1; i<length; i++){
-            Object o = Array.get(value, i);
-            this.writeDelimiter();
-            this.writeValue(o);
-        }
-        this.json.append(']');
+        this.arrayEnd();
     }
 
     void writeValue(Iterable<?> value) {
@@ -182,7 +152,7 @@ public class JsonBuilder {
         this.json.append(']');
     }
 
-    void writeBean(Object value) throws InvocationTargetException {
+    void writeBean(Object value) {
         Class<?> clazz = value.getClass();
 //        Method[] methods = clazz.getMethods();
         this.objectBegin();
@@ -198,7 +168,7 @@ public class JsonBuilder {
 
                 try {
                     Object res = m.invoke(value);
-                    this.writePair(property, res);
+                    this.objectProperty(property, res);
                 } catch (InvocationTargetException ite) {
 
                 } catch (IllegalAccessException iae) {
@@ -210,12 +180,6 @@ public class JsonBuilder {
 
         }
         this.objectEnd();
-    }
-
-
-
-    String build() {
-        return this.json.toString();
     }
 
     public String toString() {

@@ -4,7 +4,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,20 +48,30 @@ public class JsonObjectTest {
 
     @Test
     void arrayTest() {
+        User user = new User();
+        user.setAge(18);
+        user.setName("jack");
+        user.setGender("男");
 
-        HashMap<Object, Object> map1 = null;
+        List list = new ArrayList();
+        list.add("af");
+        list.add("tt");
+        list.add(1);
         HashMap<Object, Object> map = new HashMap<>();
         int[] a = new int[]{1,2,3};
+        map.put("user", user);
         map.put("ar", a);
+        map.put("list", list);
         map.put("b", true);
         map.put("ar0", "dkjfdk");
-        map.put("byte", (char) 60);
-        map.put("null1", Color.BLUE);
+        map.put("byte", (char) 65);
+        map.put("null", null);
+        map.put("color", Color.BLUE);
         map.put("ar1", 1);
         map.put("ar2", 1.08);
         map.put("ar3", 76767677788888L);
 
-        JsonBuilder jb = new JsonBuilder();
+        JsonWriter jb = new JsonWriter();
         jb.writeValue(map);
 
         System.out.println(jb);
@@ -76,7 +85,7 @@ public class JsonObjectTest {
         user.setName("jack");
         user.setGender("男人");
 
-        JsonBuilder jb = new JsonBuilder();
+        JsonWriter jb = new JsonWriter();
         jb.writeBean(user);
         System.out.println(jb);
 

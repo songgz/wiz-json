@@ -1,14 +1,23 @@
 package sgz.wizjson;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class JsonArray extends ArrayList<Object> {
 
-    public JsonArray(List<Object> value) {
+
+
+    public JsonArray(Collection<?> value) {
 
         this.addAll(value);
     }
+
+    public JsonArray(Object value) {
+        this.addAll(Arrays.asList(value));
+    }
+
 
 
     @Override
@@ -26,6 +35,8 @@ public class JsonArray extends ArrayList<Object> {
 //        }
         return builder.toString();
     }
+
+
 
 
 }
